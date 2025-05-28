@@ -145,26 +145,28 @@ void DisplayTask(void *argument)
 
         if (osMessageQueueGet(sensorQueueHandle, &data, NULL, 100) == osOK)
         {
-            // Priority 1: Sensor errors
             if (!data.dhtStatus) {
                 snprintf(lcdAlert1, sizeof(lcdAlert1), "DHT SENSOR ERROR");
+                CDC_Transmit_FS((uint8_t *)"ALERT: DHT SENSOR ERROR\r\n", strlen("ALERT: DHT SENSOR ERROR\r\n"));
                 showAlert = 1;
             }
             else if (!data.ldrStatus) {
                 snprintf(lcdAlert1, sizeof(lcdAlert1), "LDR SENSOR ERROR");
+                CDC_Transmit_FS((uint8_t *)"ALERT: LDR SENSOR ERROR\r\n", strlen("ALERT: LDR SENSOR ERROR\r\n"));
                 showAlert = 1;
             }
-            // Priority 2: Environmental thresholds (only if DHT OK)
             else {
                 if (data.temp > TEMP_ALERT_HIGH) {
                     snprintf(lcdAlert1, sizeof(lcdAlert1), "TEMP TOO HIGH");
+                    CDC_Transmit_FS((uint8_t *)"ALERT: TEMP TOO HIGH\r\n", strlen("ALERT: TEMP TOO HIGH\r\n"));
                     showAlert = 1;
                 }
                 if (data.hum > HUM_ALERT_HIGH) {
-                    if (showAlert)
+                    if (showAlert && strlen(lcdAlert2) == 0)
                         snprintf(lcdAlert2, sizeof(lcdAlert2), "HUMIDITY TOO HIGH");
-                    else
+                    else if (!showAlert)
                         snprintf(lcdAlert1, sizeof(lcdAlert1), "HUMIDITY TOO HIGH");
+                    CDC_Transmit_FS((uint8_t *)"ALERT: HUMIDITY TOO HIGH\r\n", strlen("ALERT: HUMIDITY TOO HIGH\r\n"));
                     showAlert = 1;
                 }
                 if (data.lightPercent < LIGHT_ALERT_LOW) {
@@ -172,6 +174,7 @@ void DisplayTask(void *argument)
                         snprintf(lcdAlert2, sizeof(lcdAlert2), "LIGHT LEVEL LOW");
                     else if (!showAlert)
                         snprintf(lcdAlert1, sizeof(lcdAlert1), "LIGHT LEVEL LOW");
+                    CDC_Transmit_FS((uint8_t *)"ALERT: LIGHT LEVEL LOW\r\n", strlen("ALERT: LIGHT LEVEL LOW\r\n"));
                     showAlert = 1;
                 }
                 else if (data.lightPercent > LIGHT_ALERT_HIGH) {
@@ -179,6 +182,7 @@ void DisplayTask(void *argument)
                         snprintf(lcdAlert2, sizeof(lcdAlert2), "LIGHT LEVEL HIGH");
                     else if (!showAlert)
                         snprintf(lcdAlert1, sizeof(lcdAlert1), "LIGHT LEVEL HIGH");
+                    CDC_Transmit_FS((uint8_t *)"ALERT: LIGHT LEVEL HIGH\r\n", strlen("ALERT: LIGHT LEVEL HIGH\r\n"));
                     showAlert = 1;
                 }
             }
@@ -192,7 +196,6 @@ void DisplayTask(void *argument)
                 lcd_clear();
             }
 
-            /* Normal display */
             if (displayMode == 1) {
                 snprintf(line1, sizeof(line1), "T:%03u H:%03u", data.rawTemp, data.rawHum);
                 snprintf(lbuf, sizeof(lbuf), "L:%lu", (unsigned long)data.adcValue);
